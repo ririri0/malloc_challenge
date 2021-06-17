@@ -113,6 +113,8 @@ void *my_malloc_best_fit(size_t size) {
   size_t min_size;
   simple_metadata_t *min_prev = NULL;
   simple_metadata_t *min_metadata = NULL;
+
+  /* Search the smallest free space possible */
   while (metadata) {
     if (metadata->size >= size) {
       if (!min_metadata || min_size > metadata->size) {
@@ -180,6 +182,8 @@ void *my_malloc_worst_fit(size_t size) {
   size_t max_size = 0;
   simple_metadata_t *max_prev = NULL;
   simple_metadata_t *max_metadata = NULL;
+
+  /* Search the largest free space possible */
   while (metadata) {
     if (metadata->size >= size && metadata->size > max_size) {
       max_metadata = metadata;
