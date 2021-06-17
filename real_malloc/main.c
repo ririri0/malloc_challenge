@@ -25,7 +25,9 @@ void simple_finalize();
 // [My malloc]
 //
 void my_initialize();
-void *my_malloc(size_t size);
+//void *my_malloc(size_t size);
+void *my_malloc_best_fit(size_t size);
+void *my_malloc_worst_fit(size_t size);
 void my_free(void *ptr);
 void my_finalize();
 void test();
@@ -233,11 +235,11 @@ void run_challenge(const char *trace_file_name, size_t min_size,
           printf("An allocated object is broken!");
           assert(0);
         }
+        free_func(object.ptr);
         if (trace_fp) {
           fprintf(trace_fp, "f %llu %ld\n", (unsigned long long)object.ptr,
                   object.size);
         }
-        free_func(object.ptr);
       }
 
 #if 0
@@ -267,8 +269,8 @@ void run_challenge(const char *trace_file_name, size_t min_size,
 }
 
 // Print stats
-void print_stats(char *challenge, stats_t simple_stats, stats_t my_stats) {
-  printf("%s: simple malloc => my malloc\n", challenge);
+void print_stats(char *challenge, char *my_malloc_name, stats_t simple_stats, stats_t my_stats) {
+  printf("%s: simple malloc => %s\n", challenge, my_malloc_name);
   printf("Time: %.f ms => %.f ms\n",
          (simple_stats.end_time - simple_stats.begin_time) * 1000,
          (my_stats.end_time - my_stats.begin_time) * 1000);
@@ -281,7 +283,7 @@ void print_stats(char *challenge, stats_t simple_stats, stats_t my_stats) {
 }
 
 // Run challenges
-void run_challenges() {
+void run_challenges(void *my_malloc, char *my_malloc_name) {
   stats_t simple_stats, my_stats;
 
   // Warm up run.
@@ -295,7 +297,7 @@ void run_challenges() {
   run_challenge("trace1_my.txt", 128, 128, my_initialize, my_malloc, my_free,
                 my_finalize);
   my_stats = stats;
-  print_stats("Challenge 1", simple_stats, my_stats);
+  print_stats("Challenge 1", my_malloc_name, simple_stats, my_stats);
 
   // Challenge 2:
   run_challenge("trace2_simple.txt", 16, 16, simple_initialize, simple_malloc,
@@ -304,7 +306,7 @@ void run_challenges() {
   run_challenge("trace2_my.txt", 16, 16, my_initialize, my_malloc, my_free,
                 my_finalize);
   my_stats = stats;
-  print_stats("Challenge 2", simple_stats, my_stats);
+  print_stats("Challenge 2", my_malloc_name, simple_stats, my_stats);
 
   // Challenge 3:
   run_challenge("trace3_simple.txt", 16, 128, simple_initialize, simple_malloc,
@@ -313,7 +315,7 @@ void run_challenges() {
   run_challenge("trace3_my.txt", 16, 128, my_initialize, my_malloc, my_free,
                 my_finalize);
   my_stats = stats;
-  print_stats("Challenge 3", simple_stats, my_stats);
+  print_stats("Challenge 3", my_malloc_name, simple_stats, my_stats);
 
   // Challenge 4:
   run_challenge("trace4_simple.txt", 256, 4000, simple_initialize,
@@ -322,7 +324,7 @@ void run_challenges() {
   run_challenge("trace4_my.txt", 256, 4000, my_initialize, my_malloc, my_free,
                 my_finalize);
   my_stats = stats;
-  print_stats("Challenge 4", simple_stats, my_stats);
+  print_stats("Challenge 4", my_malloc_name, simple_stats, my_stats);
 
   // Challenge 5:
   run_challenge("trace5_simple.txt", 8, 4000, simple_initialize, simple_malloc,
@@ -331,7 +333,7 @@ void run_challenges() {
   run_challenge("trace5_my.txt", 8, 4000, my_initialize, my_malloc, my_free,
                 my_finalize);
   my_stats = stats;
-  print_stats("Challenge 5", simple_stats, my_stats);
+  print_stats("Challenge 5", my_malloc_name, simple_stats, my_stats);
 }
 
 // Allocate a memory region from the system. |size| needs to be a multiple of
@@ -364,6 +366,8 @@ void munmap_to_system(void *ptr, size_t size) {
 int main(int argc, char **argv) {
   srand(12); // Set the rand seed to make the challenges non-deterministic.
   test();
-  run_challenges();
+  run_challenges(my_malloc_best_fit, "my_malloc_best_fit");
+  printf("\n\n");
+  run_challenges(my_malloc_worst_fit, "my_malloc_worst_fit");
   return 0;
 }
